@@ -38,6 +38,11 @@ exports.addItem = onRequest(async (req, res) => {
         message: "cartId and productId required",
       });
     }
+    const productDoc = await db.collection("products").doc(productId).get();
+
+    if (!productDoc.exists) {
+      return res.status(404).json({ error: "Invalid product" });
+    }
 
     const itemRef = db
       .collection("carts")
@@ -123,5 +128,25 @@ exports.removeItem = onRequest(async (req, res) => {
   } catch (error) {
     logger.error(error);
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+exports.getProduct = onRequest(async (req, res) => {
+  try {
+    const productId = req.query.productId;
+
+    if (!productId) {
+      return res.status(400).json({ error: "productId required" });
+    }
+
+    const doc = await db.collection("products").doc(productId).get();
+
+    if (!doc.exists) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    res.json(doc.data());
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });

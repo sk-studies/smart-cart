@@ -10,6 +10,16 @@ const db = admin.firestore();
 
 // 🔹 1. CREATE CART
 exports.createCart = onRequest(async (req, res) => {
+  // 🔹 CORS headers
+  res.set("Access-Control-Allow-Origin", "*");
+  res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type");
+
+  // 🔹 Handle preflight request
+  if (req.method === "OPTIONS") {
+    return res.status(204).send("");
+  }
+
   try {
     const cartRef = await db.collection("carts").add({
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -29,6 +39,16 @@ exports.createCart = onRequest(async (req, res) => {
 
 // 🔹 2. ADD ITEM TO CART
 exports.addItem = onRequest(async (req, res) => {
+  // 🔹 CORS headers
+  res.set("Access-Control-Allow-Origin", "*");
+  res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type");
+
+  // 🔹 Handle preflight request
+  if (req.method === "OPTIONS") {
+    return res.status(204).send("");
+  }
+
   try {
     const { cartId, productId } = req.body;
 
@@ -82,6 +102,16 @@ exports.addItem = onRequest(async (req, res) => {
 
 // 🔹 3. REMOVE ITEM FROM CART
 exports.removeItem = onRequest(async (req, res) => {
+  // 🔹 CORS headers
+  res.set("Access-Control-Allow-Origin", "*");
+  res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type");
+
+  // 🔹 Handle preflight request
+  if (req.method === "OPTIONS") {
+    return res.status(204).send("");
+  }
+
   try {
     const { cartId, productId } = req.body;
 

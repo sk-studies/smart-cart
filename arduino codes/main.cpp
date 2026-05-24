@@ -15,6 +15,7 @@
 
 #define SS_PIN 5
 #define RST_PIN 27
+#define END_BUTTON 25
 
 #define RED_LED 2
 #define GREEN_LED 14
@@ -54,6 +55,7 @@ void setup() {
   pinMode(RED_LED, OUTPUT);
   pinMode(GREEN_LED, OUTPUT);
   pinMode(BUZZER, OUTPUT);
+  pinMode(END_BUTTON, INPUT_PULLUP);
 
   digitalWrite(RED_LED, LOW);
   digitalWrite(GREEN_LED, LOW);
@@ -131,6 +133,7 @@ void setup() {
 
 void loop() {
   handleButton();
+  handleEndButton();
   handleRFID();
 }
 
@@ -152,6 +155,31 @@ void handleButton() {
   lastState = currentState;
 }
 
+void handleEndButton() {
+  static bool lastState = HIGH;
+  bool currentState = digitalRead(END_BUTTON);
+
+  if (lastState == HIGH && currentState == LOW) {
+    delay(300);
+
+    Serial.println("Checkout pressed");
+
+    showPaymentQR();
+  }
+
+  lastState = currentState;
+}
+
+void showPaymentQR() {
+  display.clear();
+
+  String upi = "upi://pay?pa=9623058529@ybl&pn=SmartCart&cu=INR";
+
+  Serial.println("Showing UPI QR:");
+  Serial.println(upi);
+
+  qr.create(upi.c_str());
+}
 // ---------------- CART ----------------
 
 void createCart() {

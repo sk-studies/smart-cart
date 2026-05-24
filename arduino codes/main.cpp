@@ -44,33 +44,85 @@ std::map<String, int> productCount;
 unsigned long lastScanTime = 0;
 
 // ---------------- SETUP ----------------
-
 void setup() {
   Serial.begin(115200);
-  Serial.println("System Init");
+  delay(1000);
+  Serial.println("Booting System");
 
+  // ---------------- GPIO CHECK ----------------
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   pinMode(RED_LED, OUTPUT);
   pinMode(GREEN_LED, OUTPUT);
   pinMode(BUZZER, OUTPUT);
 
-  // OLED
-  display.init();
+  digitalWrite(RED_LED, LOW);
+  digitalWrite(GREEN_LED, LOW);
+  digitalWrite(BUZZER, LOW);
+
+  // ---------------- OLED ----------------
+  if (!display.init()) {
+    Serial.println("❌ OLED init failed");
+  }
+
   display.clear();
+  display.drawString(0, 10, "OLED OK");
   display.display();
 
   qr.init();
 
-  // RFID
+  // ---------------- RFID ----------------
   SPI.begin();
   rfid.PCD_Init();
 
-  // Load cell
+  byte version = rfid.PCD_ReadRegister(rfid.VersionReg);
+
+  if (version == 0x00 || version == 0xFF) {
+    Serial.println("❌ RFID not detected");
+    displayError("RFID FAIL");
+  }
+
+  Serial.println("RFID OK");
+
+  // ---------------- LOAD CELL ----------------
   scale.begin(HX_DOUT, HX_SCK);
-  scale.set_scale(712160);   // <-- your calibrated value
+
+  unsigned long start = millis();
+  while (!scale.is_ready()) {
+    if (millis() - start > 3000) {
+      Serial.println("❌ HX711 not found");
+      displayError("LOADCELL FAIL");
+    }
+    delay(200);
+  }
+
+  Serial.println("Load Cell OK");
+
+  scale.set_scale(712160);   // your calibrated value
   scale.tare();
 
-  connectWiFi();
+  // ---------------- WIFI ----------------
+  Serial.print("Connecting WiFi");
+  WiFi.begin(ssid, password);
+
+  unsigned long wifiStart = millis();
+
+  while (WiFi.status() != WL_CONNECTED) {
+    if (millis() - wifiStart > 10000) {
+      Serial.println("\n❌ WiFi Failed");
+      displayError("WIFI FAIL");
+    }
+
+    Serial.print(".");
+    delay(500);
+  }
+
+  Serial.println("\nWiFi Connected");
+
+  // ---------------- FINAL SUCCESS ----------------
+  display.clear();
+  display.drawString(0, 10, "System Ready");
+  display.display();
+
 
   Serial.println("System Ready");
 }
@@ -255,4 +307,10 @@ void connectWiFi() {
   }
 
   Serial.println("\nConnected!");
+}
+
+void displayError(String msg) {
+  display.clear();
+  display.drawString(0, 10, msg);
+  display.display();
 }

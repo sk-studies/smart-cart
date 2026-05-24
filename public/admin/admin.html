@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Smart Cart</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h2>🛠 Admin Panel</h2>
+
+      <form id="productForm">
+        <input id="id" placeholder="Product ID" required />
+        <input id="name" placeholder="Name" required />
+        <input id="price" type="number" placeholder="Price" required />
+        <input id="weight" placeholder="Weight" required />
+        <input id="image" placeholder="Image URL" required />
+        <input id="rfid" placeholder="RFID Tag ID" required />
+
+        <button type="submit">Save Product</button>
+      </form>
+
+      <h3>Products</h3>
+      <div id="productList" class="grid"></div>
+    </div>
+
+    <script type="module" src="./admin/admin.js"></script>
+  </body>
+</html>

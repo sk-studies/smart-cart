@@ -15,12 +15,12 @@
   ],
   "hosting": {
     "public": "public",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
+      {
+        "source": "/admin",
+        "destination": "/admin/admin.html"
+      },
       {
         "source": "**",
         "destination": "/index.html"

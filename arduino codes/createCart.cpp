@@ -1,16 +1,25 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
-#include "qrcode.h"
+#include <Wire.h>
+#include <SSD1306.h>
+#include <qrcodeoled.h>
 
 #define BUTTON_PIN 4
 
+// WiFi
 const char* ssid = "SS2";
 const char* password = "SamSwap1603";
 
 const String BASE_URL = "https://api-ktoxqz34xq-el.a.run.app";
 
 String cartId = "";
+
+// OLED (ThingPulse library)
+SSD1306 display(0x3c, 21, 22);
+
+// QR object
+QRcodeOled qr(&display);
 
 // ---------------- SETUP ----------------
 
@@ -21,7 +30,15 @@ void setup() {
 
   connectWiFi();
 
-  Serial.println("Ready. Press button to create cart...");
+  // OLED init
+  display.init();
+  display.clear();
+  display.display();
+
+  // QR init
+  qr.init();
+
+  Serial.println("Ready. Press button...");
 }
 
 // ---------------- LOOP ----------------
@@ -38,7 +55,7 @@ void handleButton() {
   bool currentState = digitalRead(BUTTON_PIN);
 
   if (lastState == HIGH && currentState == LOW) {
-    delay(200); // debounce
+    delay(1000);
 
     Serial.println("Creating cart...");
     createCart();
@@ -62,7 +79,6 @@ void createCart() {
 
   if (code == 200) {
     String payload = http.getString();
-    Serial.println("Response:");
     Serial.println(payload);
 
     DynamicJsonDocument doc(256);
@@ -70,37 +86,28 @@ void createCart() {
 
     cartId = doc["cartId"].as<String>();
 
-    Serial.println("Cart Created Successfully!");
     Serial.println("Cart ID: " + cartId);
 
-    // 🔥 Generate QR
     String url = "https://smart-cart-174a0.web.app/?cartId=" + cartId;
 
-    Serial.println("QR URL:");
-    Serial.println(url);
+    showQR(url);
 
-    generateQR(url);
-    } else {
+  } else {
     Serial.println("Failed to create cart");
   }
 
   http.end();
 }
 
-void generateQR(String data) {
-  QRCode qrcode;
-  uint8_t qrcodeData[qrcode_getBufferSize(3)];
+// ---------------- QR DISPLAY ----------------
 
-  qrcode_initText(&qrcode, qrcodeData, 3, 0, data.c_str());
+void showQR(String data) {
+  display.clear();
 
-  Serial.println("\nScan this QR:\n");
+  Serial.println("Showing QR:");
+  Serial.println(data);
 
-  for (uint8_t y = 0; y < qrcode.size; y++) {
-    for (uint8_t x = 0; x < qrcode.size; x++) {
-      Serial.print(qrcode_getModule(&qrcode, x, y) ? "##" : "  ");
-    }
-    Serial.println();
-  }
+  qr.create(data.c_str());
 }
 
 // ---------------- WIFI ----------------

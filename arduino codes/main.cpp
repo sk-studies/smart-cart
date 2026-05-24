@@ -41,6 +41,8 @@ HX711 scale;
 String cartId = "";
 
 std::map<String, int> productCount;
+std::map<String, float> productPrice;
+std::map<String, float> productWeightMap;
 
 unsigned long lastScanTime = 0;
 
@@ -164,6 +166,20 @@ void handleEndButton() {
 
     Serial.println("Checkout pressed");
 
+    if (!isWeightCorrect()) {
+      Serial.println("Weight mismatch!");
+
+      display.clear();
+      display.drawString(0, 10, "Weight Error!");
+      display.drawString(0, 30, "Check Items");
+      display.display();
+
+      errorFeedback("Weight mismatch");
+      return;
+    }
+
+    Serial.println("Weight OK");
+
     showPaymentQR();
   }
 
@@ -171,9 +187,16 @@ void handleEndButton() {
 }
 
 void showPaymentQR() {
+  float totalAmount = calculateTotalAmount();
+
+  Serial.print("Total Amount: ");
+  Serial.println(totalAmount);
+
   // Step 1: Show text
   display.clear();
-  display.drawString(10, 20, "Make Payment");
+
+  display.drawString(0, 10, "Make Payment");
+  display.drawString(0, 30, "Rs: " + String(totalAmount, 2));
   display.display();
 
   Serial.println("Showing Make Payment screen");
@@ -183,7 +206,9 @@ void showPaymentQR() {
   // Step 2: Show QR
   display.clear();
 
-  String upi = "upi://pay?pa=9623058529@ybl&pn=SmartCart&cu=INR";
+  String upi = "upi://pay?pa=9623058529@ybl&pn=SmartCart&am=" 
+             + String(totalAmount, 2) + 
+             "&cu=INR";
 
   Serial.println("Showing UPI QR:");
   Serial.println(upi);
@@ -210,7 +235,9 @@ void createCart() {
     cartId = doc["cartId"].as<String>();
 
     String url = "https://smart-cart-174a0.web.app/?cartId=" + cartId;
-
+    Serial.println("Cart URL:");
+    Serial.println(url);
+  
     showQR(url);
   } else {
     errorFeedback("Invalid Response for the cart creation API");
@@ -222,6 +249,8 @@ void createCart() {
 void resetCart() {
   cartId = "";
   productCount.clear();
+  productWeightMap.clear();
+  productPrice.clear();
   scale.tare();
 
   display.clear();
@@ -253,6 +282,7 @@ void handleRFID() {
   tag.toUpperCase();
 
   Serial.println("RFID: " + tag);
+  successFeedback();
 
   processScan(tag);
 }
@@ -283,7 +313,10 @@ void processScan(String rfidTag) {
 
     float productWeight = doc["product"]["weight"];
     String productName = doc["product"]["name"];
+    float productPriceValue = doc["product"]["price"];
 
+    productPrice[rfidTag] = productPriceValue;
+    productWeightMap[rfidTag] = productWeight;
     productCount[rfidTag]++;
     int count = productCount[rfidTag];
 
@@ -319,19 +352,67 @@ void validateWeight(float productWeight) {
   errorFeedback("Invalid Weight!");
 }
 
+bool isWeightCorrect() {
+  float expected = calculateExpectedWeight();
+  float actual = getCurrentWeight();
+
+  Serial.print("Expected: ");
+  Serial.println(expected);
+
+  Serial.print("Actual: ");
+  Serial.println(actual);
+
+  float tolerance = 0.15; // 150 grams
+
+  return abs(actual - expected) <= tolerance;
+}
+
+float calculateExpectedWeight() {
+  float total = 0;
+
+  for (auto &p : productCount) {
+    String tag = p.first;
+    int qty = p.second;
+
+    float weight = productWeightMap[tag];
+
+    total += weight * qty;
+  }
+
+  return total;
+}
+
+float getCurrentWeight() {
+  return scale.get_units(10); // average
+}
+
+float calculateTotalAmount() {
+  float total = 0;
+
+  for (auto &p : productCount) {
+    String tag = p.first;
+    int qty = p.second;
+
+    float price = productPrice[tag];
+
+    total += price * qty;
+  }
+
+  return total;
+}
+
 // ---------------- FEEDBACK ----------------
 
 void successFeedback() {
-  digitalWrite(RED_LED, HIGH);
+  digitalWrite(GREEN_LED, HIGH);
   digitalWrite(BUZZER, HIGH);
   delay(800);
-  digitalWrite(RED_LED, LOW);
+  digitalWrite(GREEN_LED, LOW);
   digitalWrite(BUZZER, LOW);
 }
 
 void errorFeedback(String msg) {
-  Serial.print("Error");
-  Serial.print(msg);
+  Serial.print("Error: " + msg);
   digitalWrite(RED_LED, HIGH);
   digitalWrite(BUZZER, HIGH);
   delay(2000);

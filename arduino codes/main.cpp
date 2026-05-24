@@ -213,7 +213,7 @@ void createCart() {
 
     showQR(url);
   } else {
-    errorFeedback();
+    errorFeedback("Invalid Response for the cart creation API");
   }
 
   http.end();
@@ -249,7 +249,7 @@ void handleRFID() {
   for (byte i = 0; i < rfid.uid.size; i++) {
     tag += String(rfid.uid.uidByte[i], HEX);
   }
-
+  
   tag.toUpperCase();
 
   Serial.println("RFID: " + tag);
@@ -262,7 +262,7 @@ void handleRFID() {
 void processScan(String rfidTag) {
   if (cartId == "") {
     Serial.println("No cart!");
-    errorFeedback();
+    errorFeedback("Not Valid Cart!");
     return;
   }
 
@@ -282,16 +282,19 @@ void processScan(String rfidTag) {
     deserializeJson(doc, payload);
 
     float productWeight = doc["product"]["weight"];
+    String productName = doc["product"]["name"];
 
     productCount[rfidTag]++;
     int count = productCount[rfidTag];
 
     float expected = productWeight * count;
 
+    showProductAdded(productName);
+
     validateWeight(productWeight);
 
   } else {
-    errorFeedback();
+    errorFeedback("Invalid API response for the RFID Scan");
   }
 
   http.end();
@@ -313,21 +316,25 @@ void validateWeight(float productWeight) {
     }
   }
 
-  errorFeedback();
+  errorFeedback("Invalid Weight!");
 }
 
 // ---------------- FEEDBACK ----------------
 
 void successFeedback() {
-  digitalWrite(GREEN_LED, HIGH);
-  delay(800);
-  digitalWrite(GREEN_LED, LOW);
-}
-
-void errorFeedback() {
   digitalWrite(RED_LED, HIGH);
   digitalWrite(BUZZER, HIGH);
   delay(800);
+  digitalWrite(RED_LED, LOW);
+  digitalWrite(BUZZER, LOW);
+}
+
+void errorFeedback(String msg) {
+  Serial.print("Error");
+  Serial.print(msg);
+  digitalWrite(RED_LED, HIGH);
+  digitalWrite(BUZZER, HIGH);
+  delay(2000);
   digitalWrite(RED_LED, LOW);
   digitalWrite(BUZZER, LOW);
 }
@@ -351,4 +358,15 @@ void displayError(String msg) {
   display.clear();
   display.drawString(0, 10, msg);
   display.display();
+}
+
+void showProductAdded(String name) {
+  display.clear();
+
+  display.drawString(0, 10, "Added:");
+  display.drawString(0, 30, name);
+
+  display.display();
+
+  delay(2000);
 }

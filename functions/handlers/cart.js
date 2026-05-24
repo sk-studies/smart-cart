@@ -95,7 +95,8 @@ exports.scanRfid = async (req, res) => {
   const productDoc = snapshot.docs[0];
   const productId = productDoc.id;
 
-  // 🔹 Reuse existing logic
+  const productData = productDoc.data();
+
   const itemRef = db
     .collection("carts")
     .doc(cartId)
@@ -117,5 +118,11 @@ exports.scanRfid = async (req, res) => {
     });
   }
 
-  res.json({ success: true, product: productDoc });
+  res.json({
+    success: true,
+    product: {
+      id: productId,
+      ...productData,
+    },
+  });
 };

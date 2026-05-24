@@ -14,10 +14,10 @@
 #define BUTTON_PIN 4
 
 #define SS_PIN 5
-#define RST_PIN 22
+#define RST_PIN 27
 
 #define RED_LED 2
-#define GREEN_LED 16
+#define GREEN_LED 14
 #define BUZZER 15
 
 #define HX_DOUT 32

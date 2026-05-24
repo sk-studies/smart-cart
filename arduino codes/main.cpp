@@ -171,6 +171,16 @@ void handleEndButton() {
 }
 
 void showPaymentQR() {
+  // Step 1: Show text
+  display.clear();
+  display.drawString(10, 20, "Make Payment");
+  display.display();
+
+  Serial.println("Showing Make Payment screen");
+
+  delay(2000); // ⏱️ 2 seconds
+
+  // Step 2: Show QR
   display.clear();
 
   String upi = "upi://pay?pa=9623058529@ybl&pn=SmartCart&cu=INR";

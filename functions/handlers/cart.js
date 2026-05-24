@@ -117,5 +117,5 @@ exports.scanRfid = async (req, res) => {
     });
   }
 
-  res.json({ success: true, productId });
+  res.json({ success: true, product: productDoc });
 };

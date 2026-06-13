@@ -166,6 +166,10 @@ void handleEndButton() {
 
     Serial.println("Checkout pressed");
 
+    // comment these 2 lines to validate the weight.
+    // showPaymentQR();
+    // return;
+
     if (!isWeightCorrect()) {
       Serial.println("Weight mismatch!");
 
@@ -208,7 +212,7 @@ void showPaymentQR() {
 
   String upi = "upi://pay?pa=9623058529@ybl&pn=SmartCart&am=" 
              + String(totalAmount, 2) + 
-             "&cu=INR";
+             "&cu=INR&tn=Shopping&tr=" + cartId;
 
   Serial.println("Showing UPI QR:");
   Serial.println(upi);

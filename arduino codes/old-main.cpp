@@ -210,7 +210,7 @@ void showPaymentQR() {
   // Step 2: Show QR
   display.clear();
 
-  String upi = "upi://pay?pa=9623058529@ybl&pn=SmartCart&am=" 
+  String upi = "upi://pay?pa=8767913263-i0b2@ybl&pn=SmartCart&am=" 
              + String(totalAmount, 2) + 
              "&cu=INR&tn=Shopping&tr=" + cartId;
 

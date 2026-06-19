@@ -26,8 +26,8 @@
 
 // ---------------- WIFI ----------------
 
-const char* ssid = "SS2";
-const char* password = "SamSwap1603";
+const char* ssid = "JioFiber-4G";
+const char* password = "12345678";
 const String BASE_URL = "https://api-ktoxqz34xq-el.a.run.app";
 
 // ---------------- OBJECTS ----------------

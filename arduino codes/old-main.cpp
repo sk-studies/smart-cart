@@ -157,40 +157,34 @@ void handleButton() {
   lastState = currentState;
 }
 
-void handleEndButton()
-{
+void handleEndButton() {
   static bool lastState = HIGH;
   bool currentState = digitalRead(END_BUTTON);
 
-  if (lastState == HIGH && currentState == LOW)
-  {
+  if (lastState == HIGH && currentState == LOW) {
     delay(300);
 
     Serial.println("Checkout pressed");
 
-    display.clear();
-    display.drawString(0, 10, "Validating...");
-    display.display();
+    // comment these 2 lines to validate the weight.
+    // showPaymentQR();
+    // return;
 
-    if (isWeightCorrect())
-    {
+    if (!isWeightCorrect()) {
+      Serial.println("Weight mismatch!");
+
       display.clear();
-      display.drawString(0, 10, "Weight OK");
+      display.drawString(0, 10, "Weight Error!");
+      display.drawString(0, 30, "Check Items");
       display.display();
 
-      delay(1000);
-
-      showPaymentQR();
+      errorFeedback("Weight mismatch");
+      return;
     }
-    else
-    {
-      display.clear();
-      display.drawString(0, 10, "WARNING!");
-      display.drawString(0, 30, "Weight Mismatch");
-      display.display();
 
-      weightErrorFeedback();
-    }
+    Serial.println("Weight OK");
+
+    showPaymentQR();
   }
 
   lastState = currentState;
@@ -292,6 +286,7 @@ void handleRFID() {
   tag.toUpperCase();
 
   Serial.println("RFID: " + tag);
+  successFeedback();
 
   processScan(tag);
 }
@@ -343,88 +338,22 @@ void processScan(String rfidTag) {
 }
 
 // ---------------- WEIGHT ----------------
-void validateWeight(float productWeight)
-{
-  float startWeight = scale.get_units(5);
 
-  display.clear();
-  display.drawString(0, 10, "Place Item");
-  display.drawString(0, 30, "Waiting...");
-  display.display();
+void validateWeight(float productWeight) {
+  float start = scale.get_units(5);
 
   unsigned long startTime = millis();
 
-  while (millis() - startTime < 5000)
-  {
-    int remaining = 5 - ((millis() - startTime) / 1000);
+  while (millis() - startTime < 3000) {
+    float current = scale.get_units(5);
 
-    display.clear();
-    display.drawString(0, 10, "Place Item");
-    display.drawString(0, 30, "Wait: " + String(remaining));
-    display.display();
-
-    delay(200);
+    if ((current - start) >= (productWeight - 0.03)) {
+      successFeedback();
+      return;
+    }
   }
 
-  float currentWeight = scale.get_units(5);
-
-  float addedWeight = currentWeight - startWeight;
-
-  Serial.print("Expected Added Weight: ");
-  Serial.println(productWeight);
-
-  Serial.print("Actual Added Weight: ");
-  Serial.println(addedWeight);
-
-  if (addedWeight >= (productWeight - 0.03))
-  {
-    weightSuccessFeedback();
-  }
-  else
-  {
-    weightErrorFeedback();
-  }
-}
-
-void weightErrorFeedback()
-{
-  for (int i = 0; i < 5; i++)
-  {
-    digitalWrite(RED_LED, HIGH);
-    digitalWrite(BUZZER, HIGH);
-
-    delay(250);
-
-    digitalWrite(RED_LED, LOW);
-    digitalWrite(BUZZER, LOW);
-
-    delay(250);
-  }
-
-  display.clear();
-  display.drawString(0, 10, "Weight Error");
-  display.drawString(0, 30, "Place Correct Item");
-  display.display();
-
-  delay(2000);
-}
-
-void weightSuccessFeedback()
-{
-  for (int i = 0; i < 3; i++)
-  {
-    digitalWrite(GREEN_LED, HIGH);
-    delay(300);
-
-    digitalWrite(GREEN_LED, LOW);
-    delay(300);
-  }
-
-  display.clear();
-  display.drawString(0, 20, "Item Added");
-  display.display();
-
-  delay(1500);
+  errorFeedback("Invalid Weight!");
 }
 
 bool isWeightCorrect() {

@@ -45,6 +45,7 @@ std::map<String, float> productPrice;
 std::map<String, float> productWeightMap;
 
 unsigned long lastScanTime = 0;
+unsigned long lastMonitorTime = 0;
 
 // ---------------- SETUP ----------------
 void setup() {
@@ -137,6 +138,7 @@ void loop() {
   handleButton();
   handleEndButton();
   handleRFID();
+  monitorWeight();
 }
 
 // ---------------- BUTTON ----------------
@@ -525,4 +527,28 @@ void showProductAdded(String name) {
   display.display();
 
   delay(2000);
+}
+
+void monitorWeight()
+{
+  if (millis() - lastMonitorTime < 2000)
+    return;
+
+  lastMonitorTime = millis();
+
+  float weight = scale.get_units(10);
+
+  Serial.println("================================");
+  Serial.print("Current Weight: ");
+  Serial.print(weight, 3);
+  Serial.println(" kg");
+
+  Serial.print("Expected Weight: ");
+  Serial.print(calculateExpectedWeight(), 3);
+  Serial.println(" kg");
+
+  Serial.print("Products Count: ");
+  Serial.println(productCount.size());
+
+  Serial.println("================================");
 }
